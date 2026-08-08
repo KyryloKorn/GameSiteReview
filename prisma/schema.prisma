@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// User & Authentication
+// ============================================================
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String   @map("password_hash")
+  displayName   String?  @map("display_name")
+  avatarUrl     String?  @map("avatar_url")
+  bio           String?
+  currentlyPlaying String? @map("currently_playing")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  reviews            Review[]
+  tierLists          TierList[]
+  gameStatuses       GameStatus[]
+  activities         Activity[]
+  reviewReactions    ReviewReaction[]
+  reviewComments     ReviewComment[]
+  sentRequests       Friendship[]     @relation("FriendshipRequester")
+  receivedRequests   Friendship[]     @relation("FriendshipAddressee")
+
+  @@map("users")
+}
+
+// ============================================================
+// Game Data (cached from IGDB)
+// ============================================================
+
+model GameCache {
+  igdbId       Int      @id @map("igdb_id")
+  title        String
+  slug         String   @unique
+  coverUrl     String?  @map("cover_url")
+  summary      String?
+  genres       Json?    @default("[]")
+  platforms    Json?    @default("[]")
+  firstRelease DateTime? @map("first_release") @db.Date
+  igdbRating   Float?   @map("igdb_rating")
+  cachedAt     DateTime @default(now()) @map("cached_at")
+
+  @@index([slug])
+  @@map("game_cache")
+}
+
+// ============================================================
+// Reviews & Scoring
+// ============================================================
+
+enum Visibility {
+  PRIVATE
+  FRIENDS
+  PUBLIC
+}
+
+model Review {
+  id                 String     @id @default(uuid()) @db.Uuid
+  userId             String     @map("user_id") @db.Uuid
+  gameIgdbId         Int        @map("game_igdb_id")
+  content            String?
+  scoreOverall       Int?       @map("score_overall")
+  scoreGameplay      Int?       @map("score_gameplay")
+  scoreStory         Int?       @map("score_story")
+  scoreGraphics      Int?       @map("score_graphics")
+  scoreSound         Int?       @map("score_sound")
+  scoreReplayability Int?       @map("score_replayability")
+  visibility         Visibility @default(PRIVATE)
+  containsSpoilers   Boolean    @default(false) @map("contains_spoilers")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions ReviewReaction[]
+  comments  ReviewComment[]
+
+  @@index([gameIgdbId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+model ReviewReaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  reviewId  String   @map("review_id") @db.Uuid
+  type      String   // like, helpful, agree, disagree
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId, type])
+  @@map("review_reactions")
+}
+
+model ReviewComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  reviewId  String   @map("review_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("review_comments")
+}
+
+// ============================================================
+// Tier Lists
+// ============================================================
+
+model TierList {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  title       String
+  description String?
+  visibility  Visibility @default(PRIVATE)
+  tiersConfig Json       @default("[{\"label\":\"S\",\"color\":\"#FFD700\"},{\"label\":\"A\",\"color\":\"#FF4444\"},{\"label\":\"B\",\"color\":\"#FF8C00\"},{\"label\":\"C\",\"color\":\"#FFD700\"},{\"label\":\"D\",\"color\":\"#4CAF50\"},{\"label\":\"F\",\"color\":\"#607D8B\"}]") @map("tiers_config")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items TierListItem[]
+
+  @@map("tier_lists")
+}
+
+model TierListItem {
+  id         String @id @default(uuid()) @db.Uuid
+  tierListId String @map("tier_list_id") @db.Uuid
+  gameIgdbId Int    @map("game_igdb_id")
+  tierLabel  String @map("tier_label")
+  position   Int
+
+  // Relations
+  tierList TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+
+  @@index([tierListId, position])
+  @@map("tier_list_items")
+}
+
+// ============================================================
+// Game Library (User's personal game tracking)
+// ============================================================
+
+enum GameStatusType {
+  WANT_TO_PLAY
+  PLAYING
+  COMPLETED
+  DROPPED
+  ON_HOLD
+}
+
+model GameStatus {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @map("user_id") @db.Uuid
+  gameIgdbId  Int            @map("game_igdb_id")
+  status      GameStatusType
+  startedAt   DateTime?      @map("started_at")
+  completedAt DateTime?      @map("completed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameIgdbId])
+  @@index([userId, status])
+  @@map("game_statuses")
+}
+
+// ============================================================
+// Social — Friendships
+// ============================================================
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+model Friendship {
+  id          String           @id @default(uuid()) @db.Uuid
+  requesterId String          @map("requester_id") @db.Uuid
+  addresseeId String          @map("addressee_id") @db.Uuid
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId, addresseeId, status])
+  @@map("friendships")
+}
+
+// ============================================================
+// Activity Feed
+// ============================================================
+
+enum ActivityType {
+  REVIEW_POSTED
+  TIER_LIST_UPDATED
+  GAME_COMPLETED
+  GAME_STARTED
+  FRIEND_ADDED
+}
+
+model Activity {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  type      ActivityType
+  payload   Json?
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("activities")
+}
