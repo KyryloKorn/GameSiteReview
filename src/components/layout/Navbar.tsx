@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { logout } from '@/app/actions/auth';
 import './Navbar.css';
 
 const NAV_LINKS = [
@@ -11,7 +12,13 @@ const NAV_LINKS = [
   { href: '/friends/activity', label: 'Activity', icon: '👥' },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  user?: {
+    username: string;
+  } | null;
+}
+
+export default function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
 
   return (
@@ -42,14 +49,32 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Right side — Auth buttons */}
+        {/* Right side — Auth-aware actions */}
         <div className="navbar__actions" id="navbar-actions">
-          <Link href="/login" className="btn btn--ghost btn--sm" id="btn-login">
-            Log In
-          </Link>
-          <Link href="/register" className="btn btn--primary btn--sm" id="btn-register">
-            Sign Up
-          </Link>
+          {user ? (
+            <>
+              <Link href={`/user/${user.username}`} className="navbar__user" id="navbar-user-link">
+                <span className="navbar__avatar">
+                  {user.username.charAt(0).toUpperCase()}
+                </span>
+                <span className="navbar__username">{user.username}</span>
+              </Link>
+              <form action={logout}>
+                <button type="submit" className="btn btn--ghost btn--sm" id="btn-logout">
+                  Log Out
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="btn btn--ghost btn--sm" id="btn-login">
+                Log In
+              </Link>
+              <Link href="/register" className="btn btn--primary btn--sm" id="btn-register">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu button */}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { getSession } from "@/lib/session";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,11 +33,13 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await getSession();
+
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
-        <Navbar />
+        <Navbar user={session ? { username: session.username } : null} />
         <main className="main-content">{children}</main>
         <Footer />
       </body>
