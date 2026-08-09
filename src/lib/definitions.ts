@@ -133,6 +133,13 @@ export type TierListFormState =
     }
   | undefined;
 
+export const GameStatusSchema = z.object({
+  gameIgdbId: z.coerce.number().int().positive(),
+  status: z.enum(["WANT_TO_PLAY", "PLAYING", "COMPLETED", "DROPPED", "ON_HOLD"]),
+});
+
+export type GameStatusValue = "WANT_TO_PLAY" | "PLAYING" | "COMPLETED" | "DROPPED" | "ON_HOLD";
+
 export type SessionPayload = {
   userId: string;
   username: string;

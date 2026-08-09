@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import GameCard from "@/components/game/GameCard";
 import ReviewList from "@/components/review/ReviewList";
+import GameStatusButton from "@/components/library/GameStatusButton";
 import "./game-detail.css";
 
 interface GameDetailPageProps {
@@ -69,6 +70,23 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
     });
   } catch (err) {
     console.error("[GameDetailPage] Reviews fetch error:", err);
+  }
+
+  // Fetch user's library status for this game
+  let userStatus = null;
+  if (session) {
+    try {
+      userStatus = await prisma.gameStatus.findUnique({
+        where: {
+          userId_gameIgdbId: {
+            userId: session.userId,
+            gameIgdbId: game.id,
+          },
+        },
+      });
+    } catch (err) {
+      console.error("[GameDetailPage] Status fetch error:", err);
+    }
   }
 
   const userReview = session
@@ -136,20 +154,30 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
               )}
             </div>
 
-            {/* Rating */}
-            {rating !== null && (
-              <div className="game-detail__rating-row">
-                <div className={`game-detail__score ${ratingClass}`}>
-                  {rating}
-                </div>
-                <div className="game-detail__rating-info">
-                  <span className="game-detail__rating-label">IGDB Score</span>
-                  <span className="game-detail__rating-count">
-                    Based on {game.total_rating_count || game.rating_count} ratings
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Rating & Status Action */}
+            <div className="game-detail__rating-row">
+              {rating !== null && (
+                <>
+                  <div className={`game-detail__score ${ratingClass}`}>
+                    {rating}
+                  </div>
+                  <div className="game-detail__rating-info">
+                    <span className="game-detail__rating-label">IGDB Score</span>
+                    <span className="game-detail__rating-count">
+                      Based on {game.total_rating_count || game.rating_count} ratings
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Game Library Status Selector */}
+              <GameStatusButton
+                gameIgdbId={game.id}
+                gameSlug={game.slug}
+                initialStatus={userStatus?.status}
+                isLoggedIn={Boolean(session)}
+              />
+            </div>
 
             {/* Genres & Platforms */}
             <div className="game-detail__tags">

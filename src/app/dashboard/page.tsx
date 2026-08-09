@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import "./dashboard.css";
 
 export default async function DashboardPage() {
@@ -9,6 +10,19 @@ export default async function DashboardPage() {
   if (!session) {
     redirect("/login");
   }
+
+  // Query stats concurrently
+  const [gamesCount, tierListsCount, reviewsCount, friendsCount] = await Promise.all([
+    prisma.gameStatus.count({ where: { userId: session.userId } }),
+    prisma.tierList.count({ where: { userId: session.userId } }),
+    prisma.review.count({ where: { userId: session.userId } }),
+    prisma.friendship.count({
+      where: {
+        OR: [{ requesterId: session.userId }, { addresseeId: session.userId }],
+        status: "ACCEPTED",
+      },
+    }),
+  ]);
 
   return (
     <div className="dashboard-page" id="dashboard-page">
@@ -24,34 +38,34 @@ export default async function DashboardPage() {
 
         {/* Quick Stats */}
         <div className="dashboard-stats">
-          <div className="dashboard-stat glass-card">
+          <Link href="/dashboard/library" className="dashboard-stat glass-card" style={{ textDecoration: "none" }}>
             <div className="dashboard-stat__icon">🎮</div>
             <div className="dashboard-stat__info">
-              <span className="dashboard-stat__number">0</span>
+              <span className="dashboard-stat__number">{gamesCount}</span>
               <span className="dashboard-stat__label">Games Tracked</span>
             </div>
-          </div>
-          <div className="dashboard-stat glass-card">
+          </Link>
+          <Link href="/dashboard/tier-lists" className="dashboard-stat glass-card" style={{ textDecoration: "none" }}>
             <div className="dashboard-stat__icon">🏆</div>
             <div className="dashboard-stat__info">
-              <span className="dashboard-stat__number">0</span>
+              <span className="dashboard-stat__number">{tierListsCount}</span>
               <span className="dashboard-stat__label">Tier Lists</span>
             </div>
-          </div>
-          <div className="dashboard-stat glass-card">
+          </Link>
+          <Link href="/dashboard/reviews" className="dashboard-stat glass-card" style={{ textDecoration: "none" }}>
             <div className="dashboard-stat__icon">📝</div>
             <div className="dashboard-stat__info">
-              <span className="dashboard-stat__number">0</span>
+              <span className="dashboard-stat__number">{reviewsCount}</span>
               <span className="dashboard-stat__label">Reviews</span>
             </div>
-          </div>
-          <div className="dashboard-stat glass-card">
+          </Link>
+          <Link href="/friends" className="dashboard-stat glass-card" style={{ textDecoration: "none" }}>
             <div className="dashboard-stat__icon">👥</div>
             <div className="dashboard-stat__info">
-              <span className="dashboard-stat__number">0</span>
+              <span className="dashboard-stat__number">{friendsCount}</span>
               <span className="dashboard-stat__label">Friends</span>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Quick Actions */}
