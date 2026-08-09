@@ -117,27 +117,21 @@ export async function createOrUpdateReview(
 // Delete Review
 // ============================================================
 
-export async function deleteReview(formData: FormData): Promise<{ success: boolean; message?: string }> {
+export async function deleteReview(formData: FormData): Promise<void> {
   const session = await getSession();
-  if (!session) {
-    return { success: false, message: "Unauthorized" };
-  }
+  if (!session) return;
 
   const reviewId = formData.get("reviewId") as string;
   const gameSlug = formData.get("gameSlug") as string;
 
-  if (!reviewId) {
-    return { success: false, message: "Review ID required" };
-  }
+  if (!reviewId) return;
 
   try {
     const review = await prisma.review.findUnique({
       where: { id: reviewId },
     });
 
-    if (!review || review.userId !== session.userId) {
-      return { success: false, message: "Review not found or permission denied" };
-    }
+    if (!review || review.userId !== session.userId) return;
 
     await prisma.review.delete({
       where: { id: reviewId },
@@ -147,11 +141,8 @@ export async function deleteReview(formData: FormData): Promise<{ success: boole
       revalidatePath(`/games/${gameSlug}`);
     }
     revalidatePath("/dashboard/reviews");
-
-    return { success: true, message: "Review deleted." };
   } catch (error) {
     console.error("[Action deleteReview] Error:", error);
-    return { success: false, message: "Failed to delete review." };
   }
 }
 

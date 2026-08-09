@@ -17,11 +17,22 @@ export async function generateMetadata({ params }: GameDetailPageProps): Promise
   const game = await getGameBySlug(slug);
   if (!game) return { title: "Game Not Found" };
 
+  const summary = game.summary
+    ? game.summary.slice(0, 160)
+    : `View details, reviews, and ratings for ${game.name} on GameRank.`;
+
+  const coverUrl = game.cover?.image_id
+    ? igdbImageUrl(game.cover.image_id, "cover_big")
+    : undefined;
+
   return {
     title: game.name,
-    description: game.summary
-      ? game.summary.slice(0, 160)
-      : `View details, reviews, and ratings for ${game.name} on GameRank.`,
+    description: summary,
+    openGraph: {
+      title: `${game.name} — Reviews, Details & Ratings`,
+      description: summary,
+      images: coverUrl ? [{ url: coverUrl }] : [],
+    },
   };
 }
 

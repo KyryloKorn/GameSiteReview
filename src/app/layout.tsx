@@ -31,6 +31,17 @@ export const metadata: Metadata = {
     "gaming community",
     "game tracker",
   ],
+  openGraph: {
+    title: "GameRank — Rate, Rank & Review Your Games",
+    description: "Build custom game tier lists, write reviews, track your backlog, and share with friends.",
+    siteName: "GameRank",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GameRank — Rate, Rank & Review Your Games",
+    description: "Build custom game tier lists, write reviews, track your backlog, and share with friends.",
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
