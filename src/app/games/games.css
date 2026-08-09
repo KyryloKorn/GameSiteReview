@@ -1,0 +1,172 @@
+/* ============================================================
+   Games Browse Page Styles
+   ============================================================ */
+
+.games-page {
+  padding: calc(var(--navbar-height) + var(--space-8)) 0 var(--space-16);
+}
+
+/* Header */
+.games-page__header {
+  margin-bottom: var(--space-8);
+}
+
+.games-page__title {
+  font-size: var(--text-4xl);
+  margin-bottom: var(--space-2);
+}
+
+.games-page__title-accent {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.games-page__subtitle {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+/* Search */
+.games-page__search {
+  margin-bottom: var(--space-6);
+}
+
+/* Filters */
+.game-filters {
+  margin-bottom: var(--space-8);
+}
+
+.game-filters__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.game-filters__select {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  appearance: auto;
+}
+
+.game-filters__select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.game-filters__year-input {
+  width: 110px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.game-filters__year-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.game-filters__year-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Results info */
+.games-page__results-count {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+
+/* Grid */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-10);
+}
+
+/* Empty / Error states */
+.games-page__empty,
+.games-page__error {
+  text-align: center;
+  padding: var(--space-16) var(--space-8);
+  margin: var(--space-8) 0;
+}
+
+.games-page__empty-icon,
+.games-page__error-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+}
+
+.games-page__error h3,
+.games-page__empty h3 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+}
+
+.games-page__error p,
+.games-page__empty p {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.games-page__error-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--space-4);
+}
+
+.games-page__error-hint code {
+  background: var(--color-bg-elevated);
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+
+.games-page__error-hint a {
+  color: var(--color-primary-light);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination__current {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .game-filters__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .game-filters__year-input {
+    width: 100%;
+  }
+}
