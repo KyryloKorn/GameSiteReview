@@ -29,6 +29,7 @@ interface ReviewCardProps {
   };
   currentUserId?: string;
   gameSlug?: string;
+  isFriend?: boolean;
   onEdit?: () => void;
 }
 
@@ -36,6 +37,7 @@ export default function ReviewCard({
   review,
   currentUserId,
   gameSlug,
+  isFriend,
   onEdit,
 }: ReviewCardProps) {
   const [showSpoilers, setShowSpoilers] = useState(false);
@@ -99,6 +101,7 @@ export default function ReviewCard({
             </Link>
             <div className="review-card__meta">
               <span>{formattedDate}</span>
+              {isFriend && <span className="badge badge--accent" style={{ background: "hsla(265, 90%, 60%, 0.2)", color: "var(--color-primary-light)", border: "1px solid hsla(265, 90%, 60%, 0.4)" }}>👥 Friend Review</span>}
               {review.visibility === "PRIVATE" && <span className="badge">🔒 Private</span>}
               {review.visibility === "FRIENDS" && <span className="badge">👥 Friends</span>}
             </div>

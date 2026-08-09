@@ -38,7 +38,39 @@ export async function GET(request: Request) {
       take: 20,
     });
 
-    return NextResponse.json({ users });
+    const userIds = users.map((u) => u.id);
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [
+          { requesterId: session.userId, addresseeId: { in: userIds } },
+          { requesterId: { in: userIds }, addresseeId: session.userId },
+        ],
+      },
+    });
+
+    const enrichedUsers = users.map((user) => {
+      const friendship = friendships.find(
+        (f) => f.requesterId === user.id || f.addresseeId === user.id
+      );
+
+      let friendshipStatus: "NONE" | "PENDING_SENT" | "PENDING_RECEIVED" | "FRIENDS" = "NONE";
+      if (friendship) {
+        if (friendship.status === "ACCEPTED") {
+          friendshipStatus = "FRIENDS";
+        } else if (friendship.requesterId === session.userId) {
+          friendshipStatus = "PENDING_SENT";
+        } else {
+          friendshipStatus = "PENDING_RECEIVED";
+        }
+      }
+
+      return {
+        ...user,
+        friendshipStatus,
+      };
+    });
+
+    return NextResponse.json({ users: enrichedUsers });
   } catch (error) {
     console.error("[GET /api/users/search] Error:", error);
     return NextResponse.json({ error: "Search failed" }, { status: 500 });

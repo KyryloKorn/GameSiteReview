@@ -36,10 +36,13 @@ export default async function FriendsActivityPage() {
 
   const relevantUserIds = [session.userId, ...friendIds];
 
-  // Fetch activities
+  const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+  // Fetch activities from the last 48 hours (max 15 items)
   const rawActivities = await prisma.activity.findMany({
     where: {
       userId: { in: relevantUserIds },
+      createdAt: { gte: twoDaysAgo },
     },
     include: {
       user: {
@@ -51,7 +54,7 @@ export default async function FriendsActivityPage() {
       },
     },
     orderBy: { createdAt: "desc" },
-    take: 30,
+    take: 15,
   });
 
   // Enrich activities with IGDB game data if payload contains gameIgdbId
@@ -195,8 +198,8 @@ export default async function FriendsActivityPage() {
         ) : (
           <div className="review-list__empty glass-card" style={{ maxWidth: "600px", margin: "var(--space-8) auto" }}>
             <div className="review-list__empty-icon">⚡</div>
-            <h3>No recent activity</h3>
-            <p>Add friends or write reviews to see activity updates stream here!</p>
+            <h3>No activity in the last 48 hours</h3>
+            <p>Add friends, write reviews, or rank games to see activity stream here!</p>
             <Link href="/friends" className="btn btn--primary">
               Find Friends
             </Link>

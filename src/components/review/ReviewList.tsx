@@ -11,6 +11,7 @@ interface ReviewListProps {
   reviews: any[];
   userReview?: any;
   currentUserId?: string;
+  friendIds?: string[];
 }
 
 export default function ReviewList({
@@ -19,9 +20,11 @@ export default function ReviewList({
   reviews,
   userReview,
   currentUserId,
+  friendIds = [],
 }: ReviewListProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isWritingNew, setIsWritingNew] = useState(false);
+  const [filterTab, setFilterTab] = useState<"ALL" | "FRIENDS" | "COMMUNITY">("ALL");
 
   // Compute average ratings
   const count = reviews.length;
@@ -29,11 +32,22 @@ export default function ReviewList({
     ? (reviews.reduce((acc, r) => acc + (r.scoreOverall || 0), 0) / count).toFixed(1)
     : null;
 
+  const friendReviews = reviews.filter((r) => friendIds.includes(r.userId) && r.id !== userReview?.id);
+  const communityReviews = reviews.filter((r) => !friendIds.includes(r.userId) && r.id !== userReview?.id);
+
+  const filteredReviews = reviews
+    .filter((r) => r.id !== userReview?.id)
+    .filter((r) => {
+      if (filterTab === "FRIENDS") return friendIds.includes(r.userId);
+      if (filterTab === "COMMUNITY") return !friendIds.includes(r.userId);
+      return true;
+    });
+
   return (
     <div className="review-list-section" id="reviews-section">
       <div className="review-list__header">
         <div className="review-list__summary">
-          <h2 className="review-list__title">Community Reviews</h2>
+          <h2 className="review-list__title">Game Reviews</h2>
           {avgOverall && (
             <div className="review-list__avg-badge">
               <span className="review-list__avg-score">{avgOverall}</span>
@@ -53,6 +67,30 @@ export default function ReviewList({
           </button>
         )}
       </div>
+
+      {/* Filter Tabs for Friends vs Community */}
+      {reviews.length > 0 && (
+        <div className="game-filters__row" style={{ marginBottom: "var(--space-6)" }}>
+          <button
+            className={`btn ${filterTab === "ALL" ? "btn--primary" : "btn--secondary"} btn--sm`}
+            onClick={() => setFilterTab("ALL")}
+          >
+            All Reviews ({reviews.filter((r) => r.id !== userReview?.id).length})
+          </button>
+          <button
+            className={`btn ${filterTab === "FRIENDS" ? "btn--primary" : "btn--secondary"} btn--sm`}
+            onClick={() => setFilterTab("FRIENDS")}
+          >
+            👥 Friends ({friendReviews.length})
+          </button>
+          <button
+            className={`btn ${filterTab === "COMMUNITY" ? "btn--primary" : "btn--secondary"} btn--sm`}
+            onClick={() => setFilterTab("COMMUNITY")}
+          >
+            🌐 Community ({communityReviews.length})
+          </button>
+        </div>
+      )}
 
       {/* New Review Form */}
       {isWritingNew && (
@@ -79,7 +117,7 @@ export default function ReviewList({
 
       {/* Existing User Review */}
       {userReview && !isEditing && (
-        <div className="review-list__user-review">
+        <div className="review-list__user-review" style={{ marginBottom: "var(--space-6)" }}>
           <h3 className="review-list__sub-title">Your Review</h3>
           <ReviewCard
             review={userReview}
@@ -90,28 +128,35 @@ export default function ReviewList({
         </div>
       )}
 
-      {/* Community Reviews */}
+      {/* Reviews Grid */}
       <div className="review-list__community">
-        {reviews.length > 0 ? (
+        {filteredReviews.length > 0 ? (
           <div className="review-list__grid">
-            {reviews
-              .filter((r) => r.id !== userReview?.id)
-              .map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={review}
-                  currentUserId={currentUserId}
-                  gameSlug={gameSlug}
-                />
-              ))}
+            {filteredReviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                currentUserId={currentUserId}
+                gameSlug={gameSlug}
+                isFriend={friendIds.includes(review.userId)}
+              />
+            ))}
           </div>
         ) : (
           !userReview &&
           !isWritingNew && (
             <div className="review-list__empty glass-card">
               <div className="review-list__empty-icon">📝</div>
-              <h3>No reviews yet</h3>
-              <p>Be the first to share your experience with this game!</p>
+              <h3>
+                {filterTab === "FRIENDS"
+                  ? "No friend reviews for this game yet"
+                  : "No reviews yet"}
+              </h3>
+              <p>
+                {filterTab === "FRIENDS"
+                  ? "None of your friends have reviewed this game yet."
+                  : "Be the first to share your experience with this game!"}
+              </p>
               {currentUserId ? (
                 <button
                   className="btn btn--primary"

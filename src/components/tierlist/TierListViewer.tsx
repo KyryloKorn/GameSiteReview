@@ -90,9 +90,11 @@ export default function TierListViewer({
         </div>
 
         <div className="tier-viewer__actions">
-          <button className="btn btn--secondary btn--sm" onClick={handleShare}>
-            {copied ? "✓ Link Copied!" : "🔗 Share"}
-          </button>
+          {tierList.visibility !== "PRIVATE" && (
+            <button className="btn btn--secondary btn--sm" onClick={handleShare}>
+              {copied ? "✓ Link Copied!" : "🔗 Share"}
+            </button>
+          )}
           {isAuthor && (
             <Link href={`/tier-list/${tierList.id}/edit`} className="btn btn--primary btn--sm">
               ✏️ Edit List

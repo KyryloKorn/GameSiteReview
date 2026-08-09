@@ -51,6 +51,26 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
     notFound();
   }
 
+  // Fetch friend IDs if user is logged in
+  let friendIds: string[] = [];
+  if (session) {
+    try {
+      const friendships = await prisma.friendship.findMany({
+        where: {
+          OR: [
+            { requesterId: session.userId, status: "ACCEPTED" },
+            { addresseeId: session.userId, status: "ACCEPTED" },
+          ],
+        },
+      });
+      friendIds = friendships.map((f) =>
+        f.requesterId === session.userId ? f.addresseeId : f.requesterId
+      );
+    } catch (err) {
+      console.error("[GameDetailPage] Friendships fetch error:", err);
+    }
+  }
+
   // Fetch reviews for this game
   let reviews: any[] = [];
   try {
@@ -60,6 +80,12 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
         OR: [
           { visibility: "PUBLIC" },
           ...(session ? [{ userId: session.userId }] : []),
+          ...(friendIds.length > 0
+            ? [
+                { userId: { in: friendIds }, visibility: "PUBLIC" as const },
+                { userId: { in: friendIds }, visibility: "FRIENDS" as const },
+              ]
+            : []),
         ],
       },
       include: {
@@ -245,6 +271,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           reviews={reviews}
           userReview={userReview}
           currentUserId={session?.userId}
+          friendIds={friendIds}
         />
 
         {/* Screenshots */}

@@ -61,18 +61,29 @@ export default function FriendsManager({
     }
   };
 
-  const handleSendRequest = async (username: string) => {
+  const handleSendRequest = async (userId: string, username: string) => {
+    setSearchResults((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, friendshipStatus: "PENDING_SENT" } : u))
+    );
     const res = await sendFriendRequest(username);
     setMessage(res.message || (res.success ? "Request sent!" : "Failed to send request."));
   };
 
-  const handleRespond = async (requestId: string, accept: boolean) => {
+  const handleRespond = async (requestId: string, accept: boolean, userId?: string) => {
+    if (userId) {
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, friendshipStatus: accept ? "FRIENDS" : "NONE" } : u))
+      );
+    }
     const res = await respondFriendRequest(requestId, accept);
     setMessage(res.message || "Updated request.");
   };
 
   const handleRemove = async (userId: string) => {
     if (confirm("Are you sure you want to remove this friend?")) {
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, friendshipStatus: "NONE" } : u))
+      );
       const res = await removeFriend(userId);
       setMessage(res.message || "Friend removed.");
     }
@@ -145,7 +156,7 @@ export default function FriendsManager({
                       onClick={() => handleRemove(friend.id)}
                       title="Remove Friend"
                     >
-                      Remove
+                      Remove Friend
                     </button>
                   </div>
                 </div>
@@ -189,13 +200,13 @@ export default function FriendsManager({
                   <div className="user-card__actions">
                     <button
                       className="btn btn--primary btn--sm"
-                      onClick={() => handleRespond(req.id, true)}
+                      onClick={() => handleRespond(req.id, true, req.requester.id)}
                     >
                       ✓ Accept
                     </button>
                     <button
                       className="btn btn--ghost btn--sm"
-                      onClick={() => handleRespond(req.id, false)}
+                      onClick={() => handleRespond(req.id, false, req.requester.id)}
                     >
                       ✕ Decline
                     </button>
@@ -253,12 +264,41 @@ export default function FriendsManager({
 
                   <div className="user-card__actions">
                     {user.id !== currentUserId && (
-                      <button
-                        className="btn btn--secondary btn--sm"
-                        onClick={() => handleSendRequest(user.username)}
-                      >
-                        ➕ Add Friend
-                      </button>
+                      <>
+                        {user.friendshipStatus === "FRIENDS" && (
+                          <button
+                            className="btn btn--ghost btn--sm review-card__delete-btn"
+                            onClick={() => handleRemove(user.id)}
+                            title="Remove Friend"
+                          >
+                            Remove Friend
+                          </button>
+                        )}
+
+                        {user.friendshipStatus === "PENDING_SENT" && (
+                          <button className="btn btn--secondary btn--sm" disabled>
+                            📩 Pending
+                          </button>
+                        )}
+
+                        {user.friendshipStatus === "PENDING_RECEIVED" && (
+                          <button
+                            className="btn btn--primary btn--sm"
+                            onClick={() => setActiveTab("PENDING")}
+                          >
+                            📩 Respond
+                          </button>
+                        )}
+
+                        {user.friendshipStatus === "NONE" && (
+                          <button
+                            className="btn btn--primary btn--sm"
+                            onClick={() => handleSendRequest(user.id, user.username)}
+                          >
+                            ➕ Add Friend
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
