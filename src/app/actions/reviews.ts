@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getGameById } from "@/lib/igdb";
 import { ReviewFormSchema, ReviewFormState } from "@/lib/definitions";
 
 // ============================================================
@@ -42,6 +43,11 @@ export async function createOrUpdateReview(
   const data = validated.data;
 
   try {
+    const game = await getGameById(data.gameIgdbId);
+    if (game?.first_release_date && game.first_release_date * 1000 > Date.now()) {
+      return { message: "Cannot submit a review for an unreleased game." };
+    }
+
     // Check if user already reviewed this game
     const existingReview = await prisma.review.findFirst({
       where: {

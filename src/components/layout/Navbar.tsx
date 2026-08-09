@@ -8,6 +8,7 @@ import './Navbar.css';
 
 const NAV_LINKS = [
   { href: '/games', label: 'Games', icon: '🎮' },
+  { href: '/calendar', label: 'Calendar', icon: '📅' },
   { href: '/dashboard/tier-lists', label: 'Tier Lists', icon: '🏆' },
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/friends/activity', label: 'Activity', icon: '⚡' },

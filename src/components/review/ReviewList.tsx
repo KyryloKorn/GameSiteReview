@@ -12,6 +12,8 @@ interface ReviewListProps {
   userReview?: any;
   currentUserId?: string;
   friendIds?: string[];
+  isUnreleased?: boolean;
+  formattedReleaseDate?: string | null;
 }
 
 export default function ReviewList({
@@ -21,6 +23,8 @@ export default function ReviewList({
   userReview,
   currentUserId,
   friendIds = [],
+  isUnreleased,
+  formattedReleaseDate,
 }: ReviewListProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isWritingNew, setIsWritingNew] = useState(false);
@@ -45,6 +49,24 @@ export default function ReviewList({
 
   return (
     <div className="review-list-section" id="reviews-section">
+      {isUnreleased && (
+        <div
+          className="review-form__alert"
+          style={{
+            background: "hsla(210, 90%, 60%, 0.15)",
+            color: "var(--color-info)",
+            border: "1px solid hsla(210, 90%, 60%, 0.3)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-md)",
+            marginBottom: "var(--space-6)",
+            fontSize: "var(--text-sm)",
+          }}
+        >
+          ⏳ <strong>Upcoming Game:</strong> This game has not been released yet
+          {formattedReleaseDate ? ` (Releasing ${formattedReleaseDate})` : ""}. Reviews will open once the game is officially released!
+        </div>
+      )}
+
       <div className="review-list__header">
         <div className="review-list__summary">
           <h2 className="review-list__title">Game Reviews</h2>
@@ -57,7 +79,7 @@ export default function ReviewList({
           )}
         </div>
 
-        {currentUserId && !userReview && !isWritingNew && (
+        {currentUserId && !userReview && !isWritingNew && !isUnreleased && (
           <button
             className="btn btn--primary"
             onClick={() => setIsWritingNew(true)}
@@ -93,7 +115,7 @@ export default function ReviewList({
       )}
 
       {/* New Review Form */}
-      {isWritingNew && (
+      {isWritingNew && !isUnreleased && (
         <div className="review-list__form-wrap">
           <ReviewForm
             gameIgdbId={gameIgdbId}

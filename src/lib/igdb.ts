@@ -355,3 +355,28 @@ export async function getPlatforms(): Promise<{ id: number; name: string; abbrev
     { ttl: 86400 * 7, prefix: "gsr" }
   );
 }
+
+/**
+ * Fetch upcoming and newly released games for a specific month calendar view.
+ */
+export async function getCalendarReleases(year: number, month: number): Promise<IGDBGame[]> {
+  const monthStart = Math.floor(new Date(year, month - 1, 1, 0, 0, 0).getTime() / 1000);
+  const monthEnd = Math.floor(new Date(year, month, 0, 23, 59, 59).getTime() / 1000);
+
+  const cacheKey = `calendar:releases:${year}-${month}`;
+
+  return cacheGetOrSet(
+    cacheKey,
+    async () => {
+      const query = `
+        fields name, slug, cover.image_id, first_release_date, rating, genres.name, platforms.name, summary;
+        where first_release_date >= ${monthStart} & first_release_date <= ${monthEnd} & cover != null;
+        sort first_release_date asc;
+        limit 150;
+      `;
+
+      return igdbFetch<IGDBGame[]>("games", query);
+    },
+    { ttl: 3600 * 6, prefix: "gsr" }
+  );
+}

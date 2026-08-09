@@ -152,6 +152,11 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
 
   const developers = game.involved_companies?.filter((c) => c.developer) || [];
   const publishers = game.involved_companies?.filter((c) => c.publisher) || [];
+  const releaseTimestamp = game.first_release_date ? game.first_release_date * 1000 : null;
+  const isUnreleased = releaseTimestamp ? releaseTimestamp > Date.now() : false;
+  const formattedReleaseDate = releaseTimestamp
+    ? new Date(releaseTimestamp).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
 
   return (
     <div className="game-detail" id="game-detail-page">
@@ -193,7 +198,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
 
             {/* Rating & Status Action */}
             <div className="game-detail__rating-row">
-              {rating !== null && (
+              {rating !== null ? (
                 <>
                   <div className={`game-detail__score ${ratingClass}`}>
                     {rating}
@@ -205,7 +210,11 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
                     </span>
                   </div>
                 </>
-              )}
+              ) : isUnreleased ? (
+                <span className="badge badge--info" style={{ background: "hsla(210, 90%, 60%, 0.15)", color: "var(--color-info)", padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-full)" }}>
+                  ⏳ Releasing {formattedReleaseDate}
+                </span>
+              ) : null}
 
               {/* Game Library Status Selector */}
               <GameStatusButton
@@ -272,6 +281,8 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           userReview={userReview}
           currentUserId={session?.userId}
           friendIds={friendIds}
+          isUnreleased={isUnreleased}
+          formattedReleaseDate={formattedReleaseDate}
         />
 
         {/* Screenshots */}

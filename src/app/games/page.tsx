@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { searchGames } from "@/lib/igdb";
 import GameCard from "@/components/game/GameCard";
 import SearchBar from "@/components/game/SearchBar";
-import GameFilters from "./GameFilters";
-import Pagination from "./Pagination";
+import GameFilters from "@/app/games/GameFilters";
+import Pagination from "@/app/games/Pagination";
 import "./games.css";
 
 export const metadata: Metadata = {
