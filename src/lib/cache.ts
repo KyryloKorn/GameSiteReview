@@ -1,3 +1,4 @@
+import "server-only";
 import Redis from "ioredis";
 import { LRUCache } from "lru-cache";
 
@@ -43,12 +44,12 @@ if (process.env.NODE_ENV !== "production") {
 // ============================================================
 
 const globalForLRU = globalThis as unknown as {
-  lruCache: LRUCache<string, unknown> | undefined;
+  lruCache: LRUCache<string, any> | undefined;
 };
 
 export const lruCache =
   globalForLRU.lruCache ??
-  new LRUCache<string, unknown>({
+  new LRUCache<string, any>({
     max: 10_000, // Max 10K entries
     ttl: 1000 * 60 * 5, // Default 5 minutes
     allowStale: true, // Return stale data while refreshing

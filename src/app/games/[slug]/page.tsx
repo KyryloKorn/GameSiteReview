@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getGameBySlug, igdbImageUrl } from "@/lib/igdb";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import GameCard from "@/components/game/GameCard";
+import ReviewList from "@/components/review/ReviewList";
 import "./game-detail.css";
 
 interface GameDetailPageProps {
@@ -23,6 +26,7 @@ export async function generateMetadata({ params }: GameDetailPageProps): Promise
 
 export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { slug } = await params;
+  const session = await getSession();
 
   let game;
   try {
@@ -34,6 +38,42 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
   if (!game) {
     notFound();
   }
+
+  // Fetch reviews for this game
+  let reviews: any[] = [];
+  try {
+    reviews = await prisma.review.findMany({
+      where: {
+        gameIgdbId: game.id,
+        OR: [
+          { visibility: "PUBLIC" },
+          ...(session ? [{ userId: session.userId }] : []),
+        ],
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+        reactions: {
+          select: {
+            type: true,
+            userId: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (err) {
+    console.error("[GameDetailPage] Reviews fetch error:", err);
+  }
+
+  const userReview = session
+    ? reviews.find((r) => r.userId === session.userId)
+    : null;
 
   const coverUrl = game.cover?.image_id
     ? igdbImageUrl(game.cover.image_id, "720p")
@@ -105,7 +145,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
                 <div className="game-detail__rating-info">
                   <span className="game-detail__rating-label">IGDB Score</span>
                   <span className="game-detail__rating-count">
-                    Based on {game.total_rating_count} ratings
+                    Based on {game.total_rating_count || game.rating_count} ratings
                   </span>
                 </div>
               </div>
@@ -158,6 +198,15 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
             )}
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <ReviewList
+          gameIgdbId={game.id}
+          gameSlug={game.slug}
+          reviews={reviews}
+          userReview={userReview}
+          currentUserId={session?.userId}
+        />
 
         {/* Screenshots */}
         {game.screenshots && game.screenshots.length > 1 && (

@@ -1,4 +1,7 @@
+import "server-only";
 import { cacheGetOrSet, singleflight } from "@/lib/cache";
+import { igdbImageUrl } from "@/lib/igdb-utils";
+export { igdbImageUrl };
 
 // ============================================================
 // IGDB API Client
@@ -129,16 +132,7 @@ export interface IGDBSearchResult {
   total: number;
 }
 
-// ============================================================
-// Cover Image URL Helpers
-// ============================================================
 
-export function igdbImageUrl(
-  imageId: string,
-  size: "cover_small" | "cover_big" | "screenshot_med" | "screenshot_big" | "720p" | "1080p" = "cover_big"
-): string {
-  return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
-}
 
 // ============================================================
 // API Functions (with caching & rate limiting)

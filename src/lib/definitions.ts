@@ -43,6 +43,47 @@ export const UpdateProfileSchema = z.object({
 });
 
 // ============================================================
+// Review Schemas
+// ============================================================
+
+export const ReviewFormSchema = z.object({
+  gameIgdbId: z.coerce.number().int().positive(),
+  scoreOverall: z.coerce.number().int().min(1).max(10),
+  scoreGameplay: z.coerce.number().int().min(1).max(10).optional().nullable(),
+  scoreStory: z.coerce.number().int().min(1).max(10).optional().nullable(),
+  scoreGraphics: z.coerce.number().int().min(1).max(10).optional().nullable(),
+  scoreSound: z.coerce.number().int().min(1).max(10).optional().nullable(),
+  scoreReplayability: z.coerce.number().int().min(1).max(10).optional().nullable(),
+  content: z.string().max(5000, { error: "Review text must be at most 5000 characters." }).optional(),
+  visibility: z.enum(["PRIVATE", "FRIENDS", "PUBLIC"]).default("PRIVATE"),
+  containsSpoilers: z.coerce.boolean().default(false),
+});
+
+// ============================================================
+// Tier List Schemas
+// ============================================================
+
+export const TierRowConfigSchema = z.object({
+  label: z.string().min(1).max(20),
+  color: z.string(),
+});
+
+export const TierListItemSchema = z.object({
+  gameIgdbId: z.number().int().positive(),
+  tierLabel: z.string(),
+  position: z.number().int().nonnegative(),
+});
+
+export const TierListFormSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, { error: "Title is required." }).max(100, { error: "Title must be at most 100 characters." }).trim(),
+  description: z.string().max(1000, { error: "Description must be at most 1000 characters." }).optional(),
+  visibility: z.enum(["PRIVATE", "FRIENDS", "PUBLIC"]).default("PUBLIC"),
+  tiersConfig: z.array(TierRowConfigSchema),
+  items: z.array(TierListItemSchema),
+});
+
+// ============================================================
 // Types
 // ============================================================
 
@@ -64,6 +105,31 @@ export type LoginFormState =
         password?: string[];
       };
       message?: string;
+    }
+  | undefined;
+
+export type ReviewFormState =
+  | {
+      errors?: {
+        gameIgdbId?: string[];
+        scoreOverall?: string[];
+        content?: string[];
+        visibility?: string[];
+      };
+      message?: string;
+      success?: boolean;
+    }
+  | undefined;
+
+export type TierListFormState =
+  | {
+      errors?: {
+        title?: string[];
+        description?: string[];
+        visibility?: string[];
+      };
+      message?: string;
+      tierListId?: string;
     }
   | undefined;
 

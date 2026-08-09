@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { igdbImageUrl, type IGDBGame } from "@/lib/igdb";
+import { igdbImageUrl } from "@/lib/igdb-utils";
+import type { IGDBGame } from "@/lib/igdb";
 import "./GameCard.css";
 
 interface GameCardProps {
