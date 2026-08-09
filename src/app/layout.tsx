@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
 const inter = Inter({
@@ -47,10 +48,18 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await getSession();
 
+  let user = null;
+  if (session) {
+    user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { username: true, avatarUrl: true },
+    });
+  }
+
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
-        <Navbar user={session ? { username: session.username } : null} />
+        <Navbar user={user} />
         <main className="main-content">{children}</main>
         <Footer />
       </body>

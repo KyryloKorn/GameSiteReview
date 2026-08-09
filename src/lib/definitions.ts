@@ -95,6 +95,8 @@ export type SignupFormState =
         password?: string[];
       };
       message?: string;
+      success?: boolean;
+      redirectTo?: string;
     }
   | undefined;
 
@@ -105,6 +107,8 @@ export type LoginFormState =
         password?: string[];
       };
       message?: string;
+      success?: boolean;
+      redirectTo?: string;
     }
   | undefined;
 
@@ -133,9 +137,19 @@ export type TierListFormState =
     }
   | undefined;
 
-export const GameStatusSchema = z.object({
-  gameIgdbId: z.coerce.number().int().positive(),
-  status: z.enum(["WANT_TO_PLAY", "PLAYING", "COMPLETED", "DROPPED", "ON_HOLD"]),
+export const UpdateSettingsSchema = z.object({
+  displayName: z.string().trim().max(50).optional(),
+  bio: z.string().trim().max(300).optional(),
+  currentlyPlaying: z.string().trim().max(100).optional(),
+  avatarUrl: z.string().trim().url().or(z.literal("")).optional(),
+  email: z.string().email("Invalid email address").optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(6, "New password must be at least 6 characters").or(z.literal("")).optional(),
+});
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export type GameStatusValue = "WANT_TO_PLAY" | "PLAYING" | "COMPLETED" | "DROPPED" | "ON_HOLD";

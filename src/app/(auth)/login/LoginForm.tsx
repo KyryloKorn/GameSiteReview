@@ -1,10 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { login } from "@/app/actions/auth";
 
 export default function LoginForm() {
   const [state, action, pending] = useActionState(login, undefined);
+
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state]);
 
   return (
     <form action={action} className="auth-form" id="login-form">
@@ -37,9 +43,14 @@ export default function LoginForm() {
 
       {/* Password */}
       <div className="auth-form__field">
-        <label htmlFor="password" className="auth-form__label">
-          Password
-        </label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-1)" }}>
+          <label htmlFor="password" className="auth-form__label" style={{ marginBottom: 0 }}>
+            Password
+          </label>
+          <a href="/forgot-password" className="auth-card__link" style={{ fontSize: "var(--text-xs)" }}>
+            Forgot password?
+          </a>
+        </div>
         <input
           id="password"
           name="password"

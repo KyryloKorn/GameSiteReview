@@ -17,6 +17,7 @@ const NAV_LINKS = [
 interface NavbarProps {
   user?: {
     username: string;
+    avatarUrl?: string | null;
   } | null;
 }
 
@@ -28,14 +29,14 @@ export default function Navbar({ user }: NavbarProps) {
     <header className="navbar" id="main-navbar">
       <div className="navbar__inner container">
         {/* Logo */}
-        <Link href="/" className="navbar__logo" id="navbar-logo">
+        <Link href="/" className="navbar__logo" id="navbar-logo" onClick={() => setMobileOpen(false)}>
           <span className="navbar__logo-icon">🎯</span>
           <span className="navbar__logo-text">
             Game<span className="navbar__logo-accent">Rank</span>
           </span>
         </Link>
 
-        {/* Navigation Links */}
+        {/* Navigation Links + Mobile Menu Content */}
         <nav
           className={`navbar__nav ${mobileOpen ? 'navbar__nav--open' : ''}`}
           id="navbar-nav"
@@ -54,17 +55,84 @@ export default function Navbar({ user }: NavbarProps) {
               <span className="navbar__link-label">{link.label}</span>
             </Link>
           ))}
+
+          {/* Mobile Auth Actions (Shown inside drawer on mobile screens) */}
+          <div className="navbar__mobile-auth">
+            {user ? (
+              <div className="navbar__mobile-user-box">
+                <Link
+                  href={`/user/${user.username}`}
+                  className="navbar__user"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span className="navbar__avatar">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.username} />
+                    ) : (
+                      user.username.charAt(0).toUpperCase()
+                    )}
+                  </span>
+                  <span className="navbar__username">{user.username}</span>
+                </Link>
+                <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
+                  <Link
+                    href="/dashboard/settings"
+                    className="btn btn--secondary btn--sm"
+                    onClick={() => setMobileOpen(false)}
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    ⚙️ Settings
+                  </Link>
+                  <form action={logout} style={{ flex: 1 }}>
+                    <button
+                      type="submit"
+                      className="btn btn--ghost btn--sm"
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Log Out
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
+                <Link
+                  href="/login"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setMobileOpen(false)}
+                  style={{ justifyContent: "center" }}
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/register"
+                  className="btn btn--primary btn--sm"
+                  onClick={() => setMobileOpen(false)}
+                  style={{ justifyContent: "center" }}
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
         </nav>
 
-        {/* Right side — Auth-aware actions */}
+        {/* Right side — Desktop Auth Actions */}
         <div className="navbar__actions" id="navbar-actions">
           {user ? (
             <>
               <Link href={`/user/${user.username}`} className="navbar__user" id="navbar-user-link">
                 <span className="navbar__avatar">
-                  {user.username.charAt(0).toUpperCase()}
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.username} />
+                  ) : (
+                    user.username.charAt(0).toUpperCase()
+                  )}
                 </span>
                 <span className="navbar__username">{user.username}</span>
+              </Link>
+              <Link href="/dashboard/settings" className="btn btn--ghost btn--sm" title="Account Settings">
+                ⚙️
               </Link>
               <form action={logout}>
                 <button type="submit" className="btn btn--ghost btn--sm" id="btn-logout">

@@ -1,10 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { signup } from "@/app/actions/auth";
 
 export default function SignupForm() {
   const [state, action, pending] = useActionState(signup, undefined);
+
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state]);
 
   return (
     <form action={action} className="auth-form" id="signup-form">

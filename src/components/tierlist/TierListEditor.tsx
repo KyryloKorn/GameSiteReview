@@ -188,7 +188,7 @@ export default function TierListEditor({ initialData }: TierListEditorProps) {
     const res = await saveTierList(payload);
 
     if (res?.tierListId) {
-      router.push(`/tier-list/${res.tierListId}`);
+      window.location.href = `/tier-list/${res.tierListId}`;
     } else {
       setErrorMessage(res?.message || "Failed to save tier list.");
       setIsSaving(false);
