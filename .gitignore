@@ -42,3 +42,5 @@ next-env.d.ts
 docker-compose.yml
 Dockerfile
 .dockerignore
+CLAUDE.md
+AGENTS.md
