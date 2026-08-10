@@ -39,10 +39,12 @@ export default function Pagination({
           className="btn btn--secondary btn--sm"
           id="pagination-prev"
         >
-          ← Previous
+          ‹ Previous
         </Link>
       ) : (
-        <span />
+        <button className="btn btn--secondary btn--sm" disabled>
+          ‹ Previous
+        </button>
       )}
 
       <span className="pagination__current">Page {currentPage}</span>
@@ -53,10 +55,12 @@ export default function Pagination({
           className="btn btn--secondary btn--sm"
           id="pagination-next"
         >
-          Next →
+          Next ›
         </Link>
       ) : (
-        <span />
+        <button className="btn btn--secondary btn--sm" disabled>
+          Next ›
+        </button>
       )}
     </div>
   );

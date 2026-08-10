@@ -197,7 +197,7 @@ export default function UserLibraryList({ items }: UserLibraryListProps) {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="pagination" style={{ marginTop: "var(--space-8)" }}>
+            <div className="pagination" id="library-pagination">
               <button
                 className="btn btn--secondary btn--sm"
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -206,13 +206,13 @@ export default function UserLibraryList({ items }: UserLibraryListProps) {
                 ‹ Previous
               </button>
 
-              <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+              <div className="pagination__numbers">
                 {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
                   <button
                     key={p}
-                    className={`btn btn--sm ${p === currentPage ? "btn--primary" : "btn--ghost"}`}
+                    className={`btn btn--sm ${p === currentPage ? "btn--primary" : "btn--secondary"}`}
                     onClick={() => handlePageChange(p)}
-                    style={{ minWidth: "36px" }}
+                    style={{ minWidth: "38px", height: "36px" }}
                   >
                     {p}
                   </button>

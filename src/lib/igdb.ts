@@ -158,7 +158,7 @@ export async function searchGames(options: {
     platforms,
     yearFrom = 1999,
     yearTo,
-    limit = 20,
+    limit = 24,
     offset = 0,
     sort = "rating_count desc",
     excludeIds,

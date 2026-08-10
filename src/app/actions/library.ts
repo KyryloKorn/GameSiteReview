@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getGameById } from "@/lib/igdb";
 import { GameStatusValue } from "@/lib/definitions";
 
 export async function setGameStatus(
@@ -113,5 +114,55 @@ export async function removeGameStatus(
   } catch (error) {
     console.error("[Action removeGameStatus] Error:", error);
     return { success: false, message: "Failed to remove status." };
+  }
+}
+
+/**
+ * Fetch all completed games for the logged in user with IGDB metadata.
+ */
+export async function getUserCompletedGames(): Promise<{
+  success: boolean;
+  games?: { id: number; name: string; slug: string; coverUrl: string | null }[];
+  message?: string;
+}> {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, message: "Unauthorized." };
+  }
+
+  try {
+    const completedStatuses = await prisma.gameStatus.findMany({
+      where: {
+        userId: session.userId,
+        status: "COMPLETED",
+      },
+    });
+
+    if (!completedStatuses.length) {
+      return { success: true, games: [], message: "No completed games found in your library." };
+    }
+
+    const games = await Promise.all(
+      completedStatuses.map(async (item) => {
+        let gameData = null;
+        try {
+          gameData = await getGameById(item.gameIgdbId);
+        } catch {
+          gameData = null;
+        }
+
+        return {
+          id: item.gameIgdbId,
+          name: gameData?.name || `Game #${item.gameIgdbId}`,
+          slug: gameData?.slug || "",
+          coverUrl: gameData?.cover?.image_id || null,
+        };
+      })
+    );
+
+    return { success: true, games };
+  } catch (error) {
+    console.error("[Action getUserCompletedGames] Error:", error);
+    return { success: false, message: "Failed to load completed games." };
   }
 }

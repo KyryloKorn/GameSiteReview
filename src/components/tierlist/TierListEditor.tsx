@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveTierList } from "@/app/actions/tierlists";
+import { getUserCompletedGames } from "@/app/actions/library";
 import { igdbImageUrl } from "@/lib/igdb-utils";
 import GameSearchModal from "./GameSearchModal";
 import "./TierList.css";
@@ -54,10 +55,52 @@ export default function TierListEditor({ initialData }: TierListEditorProps) {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingCompleted, setIsLoadingCompleted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeMenuGameId, setActiveMenuGameId] = useState<number | null>(null);
   const [dragOverTier, setDragOverTier] = useState<string | null>(null);
   const [draggedGameId, setDraggedGameId] = useState<number | null>(null);
+
+  // Add all completed games from user library
+  const handleAddCompletedGames = async () => {
+    setIsLoadingCompleted(true);
+    setErrorMessage(null);
+
+    const res = await getUserCompletedGames();
+
+    if (!res.success) {
+      setErrorMessage(res.message || "Failed to load completed games.");
+      setIsLoadingCompleted(false);
+      return;
+    }
+
+    if (!res.games || res.games.length === 0) {
+      setErrorMessage("No completed games found in your library.");
+      setIsLoadingCompleted(false);
+      return;
+    }
+
+    const newGames = res.games.filter((g) => !items.some((i) => i.id === g.id));
+
+    if (newGames.length === 0) {
+      setErrorMessage("All of your completed games are already in this tier list!");
+      setIsLoadingCompleted(false);
+      return;
+    }
+
+    const currentUnrankedCount = items.filter((i) => i.tierLabel === "UNRANKED").length;
+    const newItems: TierGameItem[] = newGames.map((game, idx) => ({
+      id: game.id,
+      name: game.name,
+      slug: game.slug,
+      coverUrl: game.coverUrl,
+      tierLabel: "UNRANKED",
+      position: currentUnrankedCount + idx,
+    }));
+
+    setItems((prev) => [...prev, ...newItems]);
+    setIsLoadingCompleted(false);
+  };
 
   // Add game from search modal
   const handleAddGame = (game: { id: number; name: string; slug: string; coverUrl: string | null }) => {
@@ -277,6 +320,15 @@ export default function TierListEditor({ initialData }: TierListEditorProps) {
             </button>
 
             <button
+              className="btn btn--secondary"
+              onClick={handleAddCompletedGames}
+              disabled={isLoadingCompleted}
+              id="btn-add-completed-games"
+            >
+              {isLoadingCompleted ? "Loading Completed..." : "🏆 Add Completed Games"}
+            </button>
+
+            <button
               className="btn btn--primary"
               onClick={handleSave}
               disabled={isSaving}
@@ -339,7 +391,7 @@ export default function TierListEditor({ initialData }: TierListEditorProps) {
                 {tierGames.map((game) => (
                   <div
                     key={game.id}
-                    className={`tier-game-card ${draggedGameId === game.id ? "tier-game-card--dragging" : ""}`}
+                    className={`tier-game-card ${draggedGameId === game.id ? "tier-game-card--dragging" : ""} ${activeMenuGameId === game.id ? "tier-game-card--active-menu" : ""}`}
                     draggable
                     onDragStart={(e) => handleDragStart(e, game.id)}
                   >
@@ -436,7 +488,7 @@ export default function TierListEditor({ initialData }: TierListEditorProps) {
           {unrankedItems.map((game) => (
             <div
               key={game.id}
-              className={`tier-game-card ${draggedGameId === game.id ? "tier-game-card--dragging" : ""}`}
+              className={`tier-game-card ${draggedGameId === game.id ? "tier-game-card--dragging" : ""} ${activeMenuGameId === game.id ? "tier-game-card--active-menu" : ""}`}
               draggable
               onDragStart={(e) => handleDragStart(e, game.id)}
             >

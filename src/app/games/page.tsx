@@ -30,7 +30,7 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
   const params = await searchParams;
   const query = params.q || "";
   const offset = parseInt(params.offset || "0");
-  const limit = 20;
+  const limit = 24;
 
   const session = await getSession();
   let trackedGameIds: number[] = [];
