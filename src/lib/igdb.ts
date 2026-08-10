@@ -150,6 +150,7 @@ export async function searchGames(options: {
   limit?: number;
   offset?: number;
   sort?: string;
+  excludeIds?: number[];
 }): Promise<IGDBSearchResult> {
   const {
     query,
@@ -160,6 +161,7 @@ export async function searchGames(options: {
     limit = 20,
     offset = 0,
     sort = "rating_count desc",
+    excludeIds,
   } = options;
 
   const cacheKey = `games:search:${JSON.stringify(options)}`;
@@ -187,6 +189,9 @@ export async function searchGames(options: {
         }
         if (platforms?.length) {
           whereConditions.push(`platforms = (${platforms.join(",")})`);
+        }
+        if (excludeIds?.length) {
+          whereConditions.push(`id != (${excludeIds.join(",")})`);
         }
 
         const searchQuery = `
@@ -219,6 +224,9 @@ export async function searchGames(options: {
       }
       if (platforms?.length) {
         conditions.push(`platforms = (${platforms.join(",")})`);
+      }
+      if (excludeIds?.length) {
+        conditions.push(`id != (${excludeIds.join(",")})`);
       }
 
       const whereClause = `where ${conditions.join(" & ")};`;

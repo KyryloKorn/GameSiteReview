@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { searchGames } from "@/lib/igdb";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import GameCard from "@/components/game/GameCard";
 import SearchBar from "@/components/game/SearchBar";
 import GameFilters from "@/app/games/GameFilters";
@@ -20,6 +22,7 @@ interface GamesPageProps {
     yearTo?: string;
     sort?: string;
     offset?: string;
+    hideTracked?: string;
   }>;
 }
 
@@ -28,6 +31,23 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
   const query = params.q || "";
   const offset = parseInt(params.offset || "0");
   const limit = 20;
+
+  const session = await getSession();
+  let trackedGameIds: number[] = [];
+
+  if (session) {
+    try {
+      const statuses = await prisma.gameStatus.findMany({
+        where: { userId: session.userId },
+        select: { gameIgdbId: true },
+      });
+      trackedGameIds = statuses.map((s) => s.gameIgdbId);
+    } catch (err) {
+      console.error("[GamesPage] Error fetching tracked games:", err);
+    }
+  }
+
+  const hideTracked = params.hideTracked === "true";
 
   let result = { games: [] as any[], total: 0 };
   let error: string | null = null;
@@ -40,9 +60,14 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
       yearFrom: params.yearFrom ? parseInt(params.yearFrom) : 1999,
       yearTo: params.yearTo ? parseInt(params.yearTo) : undefined,
       sort: params.sort || "rating_count desc",
+      excludeIds: hideTracked && trackedGameIds.length > 0 ? trackedGameIds : undefined,
       limit,
       offset,
     });
+
+    if (hideTracked && trackedGameIds.length > 0) {
+      result.games = result.games.filter((g) => !trackedGameIds.includes(g.id));
+    }
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load games";
   }
@@ -75,6 +100,9 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
           currentSort={params.sort}
           currentYearFrom={params.yearFrom}
           currentYearTo={params.yearTo}
+          currentHideTracked={params.hideTracked}
+          isLoggedIn={Boolean(session)}
+          trackedCount={trackedGameIds.length}
         />
 
         {/* Error */}

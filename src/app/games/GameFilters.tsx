@@ -56,6 +56,9 @@ interface GameFiltersProps {
   currentSort?: string;
   currentYearFrom?: string;
   currentYearTo?: string;
+  currentHideTracked?: string;
+  isLoggedIn?: boolean;
+  trackedCount?: number;
 }
 
 export default function GameFilters({
@@ -64,6 +67,9 @@ export default function GameFilters({
   currentSort = "rating_count desc",
   currentYearFrom,
   currentYearTo,
+  currentHideTracked,
+  isLoggedIn,
+  trackedCount = 0,
 }: GameFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -86,7 +92,12 @@ export default function GameFilters({
     router.push(`/games?${params.toString()}`);
   };
 
-  const hasActiveFilters = currentGenre || currentPlatform || currentYearFrom || currentYearTo;
+  const hasActiveFilters =
+    currentGenre ||
+    currentPlatform ||
+    currentYearFrom ||
+    currentYearTo ||
+    currentHideTracked === "true";
 
   return (
     <div className="game-filters" id="game-filters">
@@ -147,6 +158,17 @@ export default function GameFilters({
           onChange={(e) => updateFilter("yearTo", e.target.value)}
           id="filter-year-to"
         />
+
+        {isLoggedIn && (
+          <label className="game-filters__checkbox-label" id="filter-hide-tracked">
+            <input
+              type="checkbox"
+              checked={currentHideTracked === "true"}
+              onChange={(e) => updateFilter("hideTracked", e.target.checked ? "true" : "")}
+            />
+            <span>🙈 Hide My Tracked Games ({trackedCount})</span>
+          </label>
+        )}
 
         {hasActiveFilters && (
           <button
