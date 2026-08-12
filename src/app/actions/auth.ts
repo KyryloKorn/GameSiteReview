@@ -69,6 +69,7 @@ export async function signup(
 
   // 4. Create session and return redirect payload
   await createSession(user.id, user.username);
+  revalidatePath("/", "layout");
   return { success: true, redirectTo: "/dashboard" };
 }
 
@@ -112,6 +113,7 @@ export async function login(
 
   // 4. Create session and return redirect payload
   await createSession(user.id, user.username);
+  revalidatePath("/", "layout");
   return { success: true, redirectTo: "/dashboard" };
 }
 
@@ -121,6 +123,7 @@ export async function login(
 
 export async function logout(): Promise<void> {
   await deleteSession();
+  revalidatePath("/", "layout");
   redirect("/login");
 }
 

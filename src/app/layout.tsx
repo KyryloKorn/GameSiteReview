@@ -6,6 +6,8 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],

@@ -21,6 +21,7 @@ interface CalendarGame {
 interface CalendarClientProps {
   initialYear: number;
   initialMonth: number; // 1-12
+  currentFilter?: "major" | "hyped" | "all";
   games: CalendarGame[];
 }
 
@@ -44,6 +45,7 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export default function CalendarClient({
   initialYear,
   initialMonth,
+  currentFilter = "major",
   games,
 }: CalendarClientProps) {
   const router = useRouter();
@@ -62,7 +64,7 @@ export default function CalendarClient({
       newMonth = 12;
       newYear -= 1;
     }
-    router.push(`/calendar?year=${newYear}&month=${newMonth}`);
+    router.push(`/calendar?year=${newYear}&month=${newMonth}&filter=${currentFilter}`);
   };
 
   const handleNextMonth = () => {
@@ -72,12 +74,16 @@ export default function CalendarClient({
       newMonth = 1;
       newYear += 1;
     }
-    router.push(`/calendar?year=${newYear}&month=${newMonth}`);
+    router.push(`/calendar?year=${newYear}&month=${newMonth}&filter=${currentFilter}`);
   };
 
   const handleToday = () => {
     const now = new Date();
-    router.push(`/calendar?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+    router.push(`/calendar?year=${now.getFullYear()}&month=${now.getMonth() + 1}&filter=${currentFilter}`);
+  };
+
+  const handleFilterChange = (filter: "major" | "hyped" | "all") => {
+    router.push(`/calendar?year=${initialYear}&month=${initialMonth}&filter=${filter}`);
   };
 
   // Build Month Calendar Days
@@ -85,15 +91,20 @@ export default function CalendarClient({
   const daysInMonth = new Date(initialYear, initialMonth, 0).getDate();
   const daysInPrevMonth = new Date(initialYear, initialMonth - 1, 0).getDate();
 
-  // Group games by day of month
+  // Group games by day of month using UTC timestamps
   const gamesByDay: Record<number, CalendarGame[]> = {};
   games.forEach((game) => {
     if (game.first_release_date) {
       const date = new Date(game.first_release_date * 1000);
-      if (date.getFullYear() === initialYear && date.getMonth() + 1 === initialMonth) {
-        const day = date.getDate();
+      const gameYear = date.getUTCFullYear();
+      const gameMonth = date.getUTCMonth() + 1;
+      const day = date.getUTCDate();
+
+      if (gameYear === initialYear && gameMonth === initialMonth) {
         if (!gamesByDay[day]) gamesByDay[day] = [];
-        gamesByDay[day].push(game);
+        if (!gamesByDay[day].some((g) => g.id === game.id)) {
+          gamesByDay[day].push(game);
+        }
       }
     }
   });
@@ -161,12 +172,32 @@ export default function CalendarClient({
           </button>
         </div>
 
+        {/* AAA / Notable Games Filter Controls */}
+        <div className="game-filters__row" style={{ margin: 0 }}>
+          <button
+            className={`btn btn--sm ${currentFilter === "major" ? "btn--primary" : "btn--secondary"}`}
+            onClick={() => handleFilterChange("major")}
+            title="Show AAA & Notable AA Releases"
+            id="calendar-filter-major"
+          >
+            🌟 Major Releases (AAA/AA)
+          </button>
+          <button
+            className={`btn btn--sm ${currentFilter === "all" ? "btn--primary" : "btn--secondary"}`}
+            onClick={() => handleFilterChange("all")}
+            title="Show All Releases including Niche Indies"
+            id="calendar-filter-all"
+          >
+            🌐 All Releases
+          </button>
+        </div>
+
         <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
           <button className="btn btn--secondary btn--sm" onClick={handleToday}>
             Today
           </button>
           <span className="badge badge--accent">
-            🎮 {games.length} Releases This Month
+            🎮 {games.length} Releases
           </span>
         </div>
       </div>
@@ -187,9 +218,8 @@ export default function CalendarClient({
           return (
             <div
               key={idx}
-              className={`calendar-cell ${!cell.isCurrentMonth ? "calendar-cell--outside" : ""} ${
-                cell.isToday ? "calendar-cell--today" : ""
-              }`}
+              className={`calendar-cell ${!cell.isCurrentMonth ? "calendar-cell--outside" : ""} ${cell.isToday ? "calendar-cell--today" : ""
+                }`}
             >
               <div className="calendar-cell__header">
                 <span className="calendar-cell__date-number">{cell.dayNumber}</span>

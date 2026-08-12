@@ -13,6 +13,7 @@ interface CalendarPageProps {
   searchParams: Promise<{
     year?: string;
     month?: string;
+    filter?: string;
   }>;
 }
 
@@ -21,10 +22,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const now = new Date();
   const year = parseInt(params.year || String(now.getFullYear()));
   const month = parseInt(params.month || String(now.getMonth() + 1));
+  const filter = (params.filter as "major" | "all") || "major";
 
   let games: any[] = [];
   try {
-    games = await getCalendarReleases(year, month);
+    games = await getCalendarReleases(year, month, filter);
   } catch (err) {
     console.error("[CalendarPage] Failed to fetch calendar releases:", err);
   }
@@ -41,7 +43,12 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
           </p>
         </div>
 
-        <CalendarClient initialYear={year} initialMonth={month} games={games} />
+        <CalendarClient
+          initialYear={year}
+          initialMonth={month}
+          currentFilter={filter}
+          games={games}
+        />
       </div>
     </div>
   );

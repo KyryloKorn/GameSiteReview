@@ -63,38 +63,51 @@ async function getAccessToken(): Promise<string> {
 async function igdbFetch<T>(
   endpoint: string,
   query: string,
-  maxRetries = 3
+  maxRetries = 5
 ): Promise<T> {
   const accessToken = await getAccessToken();
   const clientId = process.env.TWITCH_CLIENT_ID!;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const res = await fetch(`${IGDB_BASE_URL}/${endpoint}`, {
-      method: "POST",
-      headers: {
-        "Client-ID": clientId,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "text/plain",
-      },
-      body: query,
-    });
+    try {
+      const res = await fetch(`${IGDB_BASE_URL}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Client-ID": clientId,
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "text/plain",
+        },
+        body: query,
+      });
 
-    if (res.status === 429) {
-      // IGDB rate limit (4 req/sec). Wait and retry with backoff.
-      const backoffMs = Math.pow(2, attempt) * 350;
-      await new Promise((r) => setTimeout(r, backoffMs));
-      continue;
+      if (res.status === 429) {
+        // IGDB rate limit (4 req/sec). Wait with exponential backoff & random jitter.
+        const backoffMs = Math.pow(2, attempt) * 500 + Math.floor(Math.random() * 250);
+        await new Promise((r) => setTimeout(r, backoffMs));
+        continue;
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.warn(`[IGDB] API warning (${res.status}): ${text}`);
+        if (attempt < maxRetries - 1) {
+          await new Promise((r) => setTimeout(r, 400));
+          continue;
+        }
+        return [] as unknown as T;
+      }
+
+      return (await res.json()) as T;
+    } catch (err) {
+      if (attempt === maxRetries - 1) {
+        console.error("[IGDB] Fetch failed after retries:", err);
+        return [] as unknown as T;
+      }
+      await new Promise((r) => setTimeout(r, 400));
     }
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`IGDB API error (${res.status}): ${text}`);
-    }
-
-    return res.json() as Promise<T>;
   }
 
-  throw new Error("IGDB API rate limit exceeded (429) after multiple retries.");
+  return [] as unknown as T;
 }
 
 // ============================================================
@@ -173,7 +186,7 @@ export async function searchGames(options: {
 
       // Text search
       if (query && query.trim()) {
-        const whereConditions: string[] = ["cover != null"];
+        const whereConditions: string[] = ["cover != null", "version_parent = null"];
         if (yearFrom) {
           whereConditions.push(
             `first_release_date >= ${Math.floor(new Date(`${yearFrom}-01-01`).getTime() / 1000)}`
@@ -207,7 +220,7 @@ export async function searchGames(options: {
       }
 
       // Browse mode
-      const conditions: string[] = ["cover != null"];
+      const conditions: string[] = ["cover != null", "version_parent = null"];
 
       if (yearFrom) {
         conditions.push(
@@ -242,7 +255,7 @@ export async function searchGames(options: {
       const games = await igdbFetch<IGDBGame[]>("games", browseQuery);
       return { games, total: games.length >= limit ? offset + limit + 1 : offset + games.length };
     },
-    { ttl: 300, prefix: "gsr_v2" }
+    { ttl: 300, prefix: "gsr_v3" }
   );
 }
 
@@ -320,6 +333,7 @@ export async function getTrendingGames(limit: number = 12): Promise<IGDBGame[]> 
       const query = `
         fields name, slug, summary, cover.image_id, genres.name, platforms.name, platforms.abbreviation, first_release_date, rating, rating_count;
         where cover != null
+          & version_parent = null
           & first_release_date >= ${twoYearsAgo};
         sort rating_count desc;
         limit ${limit};
@@ -367,24 +381,63 @@ export async function getPlatforms(): Promise<{ id: number; name: string; abbrev
 /**
  * Fetch upcoming and newly released games for a specific month calendar view.
  */
-export async function getCalendarReleases(year: number, month: number): Promise<IGDBGame[]> {
-  const monthStart = Math.floor(new Date(year, month - 1, 1, 0, 0, 0).getTime() / 1000);
-  const monthEnd = Math.floor(new Date(year, month, 0, 23, 59, 59).getTime() / 1000);
+export async function getCalendarReleases(
+  year: number,
+  month: number,
+  filter: "major" | "all" = "major"
+): Promise<IGDBGame[]> {
+  const monthStart = Math.floor(Date.UTC(year, month - 1, 1, 0, 0, 0) / 1000);
+  const monthEnd = Math.floor(Date.UTC(year, month, 0, 23, 59, 59) / 1000);
 
-  const cacheKey = `calendar:releases:${year}-${month}`;
+  const cacheKey = `calendar:releases:v7:${year}-${month}:${filter}`;
 
   return cacheGetOrSet(
     cacheKey,
     async () => {
+      let whereClause = `where first_release_date >= ${monthStart} & first_release_date <= ${monthEnd} & cover != null & version_parent = null`;
+
+      if (filter === "major") {
+        whereClause += ` & hypes != null & hypes >= 100`;
+      }
+
+      if (filter === "all") {
+        const popularQuery = `
+          fields name, slug, cover.image_id, first_release_date, rating, genres.name, platforms.name, summary, hypes;
+          ${whereClause};
+          sort hypes desc;
+          limit 250;
+        `;
+        const chronologyQuery = `
+          fields name, slug, cover.image_id, first_release_date, rating, genres.name, platforms.name, summary, hypes;
+          ${whereClause};
+          sort first_release_date asc;
+          limit 250;
+        `;
+
+        const [popularGames, chronologyGames] = await Promise.all([
+          igdbFetch<IGDBGame[]>("games", popularQuery).catch(() => []),
+          igdbFetch<IGDBGame[]>("games", chronologyQuery).catch(() => []),
+        ]);
+
+        const gameMap = new Map<number, IGDBGame>();
+        [...popularGames, ...chronologyGames].forEach((game) => {
+          if (game.id && game.first_release_date) {
+            gameMap.set(game.id, game);
+          }
+        });
+
+        return Array.from(gameMap.values());
+      }
+
       const query = `
-        fields name, slug, cover.image_id, first_release_date, rating, genres.name, platforms.name, summary;
-        where first_release_date >= ${monthStart} & first_release_date <= ${monthEnd} & cover != null;
+        fields name, slug, cover.image_id, first_release_date, rating, genres.name, platforms.name, summary, hypes;
+        ${whereClause};
         sort first_release_date asc;
-        limit 150;
+        limit 300;
       `;
 
       return igdbFetch<IGDBGame[]>("games", query);
     },
-    { ttl: 3600 * 6, prefix: "gsr" }
+    { ttl: 3600 * 6, prefix: "gsr_v7" }
   );
 }
