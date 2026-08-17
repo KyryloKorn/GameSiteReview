@@ -10,9 +10,9 @@ const NAV_LINKS = [
   { href: '/games', label: 'Games', icon: '🎮' },
   { href: '/calendar', label: 'Calendar', icon: '📅' },
   { href: '/dashboard/tier-lists', label: 'Tier Lists', icon: '🏆' },
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+  { href: '/dashboard', label: 'Dashboard', icon: '📊', exact: true },
   { href: '/friends/activity', label: 'Activity', icon: '⚡' },
-  { href: '/friends', label: 'Friends', icon: '👥' },
+  { href: '/friends', label: 'Friends', icon: '👥', exact: true },
 ];
 
 interface NavbarProps {
@@ -20,6 +20,11 @@ interface NavbarProps {
     username: string;
     avatarUrl?: string | null;
   } | null;
+}
+
+function isLinkActive(pathname: string, href: string, exact?: boolean) {
+  if (exact) return pathname === href;
+  return pathname === href || pathname.startsWith(href + '/');
 }
 
 export default function Navbar({ user }: NavbarProps) {
@@ -47,7 +52,7 @@ export default function Navbar({ user }: NavbarProps) {
               key={link.href}
               href={link.href}
               className={`navbar__link ${
-                pathname.startsWith(link.href) ? 'navbar__link--active' : ''
+                isLinkActive(pathname, link.href, link.exact) ? 'navbar__link--active' : ''
               }`}
               id={`nav-link-${link.label.toLowerCase().replace(/\s/g, '-')}`}
               onClick={() => setMobileOpen(false)}

@@ -35,7 +35,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--transition-slow);
+  transition: transform var(--transition-slow),
+              opacity var(--transition-base);
 }
 
 .game-card:hover .game-card__image {
@@ -68,6 +69,7 @@
   font-weight: var(--font-weight-bold);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .game-card__rating.score-circle--high {

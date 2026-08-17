@@ -245,6 +245,15 @@ p {
   transform: translateY(-2px);
 }
 
+.glass-card--static {
+  transition: border-color var(--transition-base),
+              box-shadow var(--transition-base);
+}
+
+.glass-card--static:hover {
+  transform: none;
+}
+
 /* ---- Buttons ---- */
 .btn {
   display: inline-flex;
@@ -267,6 +276,13 @@ p {
 
 .btn:active {
   transform: scale(0.97);
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 
 .btn--primary {
@@ -520,5 +536,17 @@ p {
   
   .container {
     padding: 0 var(--space-4);
+  }
+}
+
+/* ---- Accessibility — Reduced Motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

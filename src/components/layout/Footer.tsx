@@ -33,7 +33,7 @@ export default function Footer() {
           <div className="footer__section">
             <h4 className="footer__section-title">Community</h4>
             <nav className="footer__links">
-              <Link href="/friends/find" className="footer__link">Find Friends</Link>
+              <Link href="/friends" className="footer__link">Find Friends</Link>
               <Link href="/friends/activity" className="footer__link">Activity Feed</Link>
             </nav>
           </div>

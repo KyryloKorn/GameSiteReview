@@ -159,7 +159,7 @@ export default function CalendarClient({
   return (
     <div className="calendar-container">
       {/* Month Navigation Header */}
-      <div className="calendar-header glass-card">
+      <div className="calendar-header glass-card glass-card--static">
         <div className="calendar-header__title-group">
           <button className="calendar-header__nav-btn" onClick={handlePrevMonth} title="Previous Month">
             ‹

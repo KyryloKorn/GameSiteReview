@@ -388,6 +388,22 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .calendar-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .calendar-header__title-group {
+    justify-content: center;
+  }
+
+  .calendar-header__month-title {
+    min-width: auto;
+    text-align: center;
+    font-size: var(--text-xl);
+  }
+
   .calendar-grid {
     grid-template-columns: repeat(7, minmax(44px, 1fr));
     overflow-x: auto;
